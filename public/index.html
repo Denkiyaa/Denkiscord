@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Denkiscord - Chat, Ses, Ekran Paylaşımı & Kontrol Paneli</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #container {
+      display: flex;
+      height: 100vh;
+    }
+    /* Sol panel: Kanal + kullanıcı listesi */
+    #sidebar {
+      width: 250px;
+      background-color: #2f3136;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar h2 {
+      text-align: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #23272a;
+      margin: 0;
+    }
+    #channelList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #channelList li {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid #23272a;
+    }
+    #channelList li.active {
+      background-color: #40444b;
+    }
+    #channelUserList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #channelUserList li {
+      padding: 5px 20px;
+      border-bottom: 1px solid #23272a;
+    }
+    /* Sağ panel: Chat, Ses ve Ekran Paylaşımı */
+    #mainContent {
+      flex-grow: 1;
+      background-color: #36393f;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+    #chatArea {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #40444b;
+    }
+    #chatInputContainer {
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #23272a;
+      padding: 10px;
+      background-color: #2f3136;
+    }
+    #message {
+      flex-grow: 1;
+      padding: 5px;
+    }
+    #sendBtn {
+      padding: 5px 10px;
+      margin-left: 10px;
+    }
+    #voiceArea {
+      padding: 10px;
+      border-top: 1px solid #23272a;
+      background-color: #2f3136;
+      display: flex;
+      align-items: center;
+    }
+    #voiceIndicator {
+      width: 50px;
+      height: 50px;
+      border: 3px solid gray;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+      text-align: center;
+      line-height: 50px;
+      font-size: 14px;
+    }
+    #voiceIndicator.speaking {
+      border-color: green;
+    }
+    #nicknameDisplay {
+      font-weight: bold;
+    }
+    /* Ekran Paylaşımı Videoları */
+    #screenVideos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      background-color: #2f3136;
+    }
+    #screenVideos video {
+      width: 300px;
+      border: 2px solid #000;
+      background: #000;
+    }
+    /* Geçici bildirim mesajı */
+    .temp-message {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 9999;
+      opacity: 0.9;
+    }
+    /* Kontrol Paneli: Sol alt köşe */
+    #controlPanel {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background-color: rgba(47, 49, 54, 0.9);
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 10000;
+      display: flex;
+      gap: 5px;
+    }
+    #controlPanel button {
+      padding: 5px 10px;
+      font-size: 14px;
+      border: none;
+      background: #7289da;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #controlPanel button:hover {
+      background: #677bc4;
+    }
+    /* Remote audio element için (sadece referans) */
+    .remoteAudio { display: none; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Sol panel -->
+    <div id="sidebar">
+      <h2>Kanallar</h2>
+      <ul id="channelList">
+        <li id="genelChannel" class="active">Genel
+          <ul id="channelUserList"></ul>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Sağ panel: Chat, Ses, Ekran Paylaşımı -->
+    <div id="mainContent">
+      <!-- Chat Alanı -->
+      <div id="chatArea"></div>
+      <div id="chatInputContainer">
+        <input id="message" type="text" placeholder="Mesaj yazın...">
+        <button id="sendBtn">Gönder</button>
+      </div>
+      <!-- Ses Alanı -->
+      <div id="voiceArea">
+        <div id="voiceIndicator">Sen</div>
+        <div id="nicknameDisplay"></div>
+      </div>
+      <!-- Ekran Paylaşımı Videoları -->
+      <div id="screenVideos"></div>
+    </div>
+  </div>
+  
+  <!-- Kontrol Paneli: 4 Buton -->
+  <div id="controlPanel">
+    <button id="disconnectBtn">❌ Disconnect</button>
+    <button id="muteBtn">🔇 Mute</button>
+    <button id="deafBtn">🙉 Deaf</button>
+    <button id="screenShareCtrlBtn">🖥️ Screen Share</button>
+  </div>
+  
+  <!-- Socket.IO ve SimplePeer -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+  <script>
+    /* ========== 1) Başlangıç: Nick & Değişkenler ========== */
+    let nickname = prompt("Lütfen nickinizi girin:") || "Anonim";
+    document.getElementById('nicknameDisplay').textContent = nickname;
+
+    const socket = io();
+    const chatArea = document.getElementById('chatArea');
+    const messageInput = document.getElementById('message');
+    const sendBtn = document.getElementById('sendBtn');
+    const channelUserList = document.getElementById('channelUserList');
+    const voiceIndicator = document.getElementById('voiceIndicator');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const deafBtn = document.getElementById('deafBtn');
+    const screenShareCtrlBtn = document.getElementById('screenShareCtrlBtn');
+    const screenVideos = document.getElementById('screenVideos');
+
+    // WebRTC ile ilgili değişkenler
+    let localStream;          // Mikrofon
+    let localScreenStream;    // Ekran paylaşımı
+    let audioContext, analyser, microphone, javascriptNode;
+    const peers = {};         // { userId: { voicePeer, screenSharePeer } }
+    let channelUsers = {};    // Kanal kullanıcıları
+
+    let isMuted = false;
+    let isDeaf = false; // Gelen remote audio'yu kapatma durumu
+
+    /* ========== 2) Yardımcı Fonksiyonlar ========== */
+    // Chat mesajını ekrana yaz
+    function appendChatMessage(data) {
+      const msgDiv = document.createElement('div');
+      msgDiv.textContent = data.nickname + ": " + data.msg;
+      chatArea.appendChild(msgDiv);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // Kanal kullanıcı listesini güncelle
+    function updateUserList(users) {
+      channelUserList.innerHTML = "";
+      channelUsers = {};
+      users.forEach(u => { channelUsers[u.id] = u.nickname; });
+      users.forEach(u => {
+        const li = document.createElement('li');
+        li.id = `user-${u.id}`;
+        li.textContent = u.nickname;
+        channelUserList.appendChild(li);
+      });
+    }
+
+    // Geçici bildirim mesajı göster
+    function showTemporaryMessage(text) {
+      const msg = document.createElement('div');
+      msg.classList.add('temp-message');
+      msg.textContent = text;
+      document.body.appendChild(msg);
+      setTimeout(() => { msg.remove(); }, 3000);
+    }
+
+    // Bildirim sesi çal
+    function playNotificationSound() {
+      const audio = new Audio('/sounds/notify.mp3');
+      audio.play().catch(err => { console.log("Bildirim sesi çalınamadı:", err); });
+    }
+
+    // Uzak ses akışını oynat – remote audio elementine "remoteAudio" sınıfı ekle ve remote analiz başlat
+    function addAudioStream(stream, userId) {
+      const audio = document.createElement('audio');
+      audio.srcObject = stream;
+      audio.classList.add('remoteAudio');
+      audio.play();
+      if (userId) {
+        addRemoteAudioIndicator(audio, userId);
+      }
+    }
+
+    // Remote audio için ses seviyesi tespiti ve kanal listesinde gösterim (yeşil daire)
+    function addRemoteAudioIndicator(audioElement, userId) {
+      const remoteAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = remoteAudioContext.createMediaElementSource(audioElement);
+      const analyser = remoteAudioContext.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      // Sürekli güncelleme fonksiyonu
+      function updateIndicator() {
+        let array = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(array);
+        let values = 0;
+        for (let i = 0; i < array.length; i++) { values += array[i]; }
+        let average = values / array.length;
+        const userListElement = document.getElementById(`user-${userId}`);
+        if (userListElement) {
+          // Eşik değeri örneğin 20
+          if (average > 20) {
+            if (!userListElement.querySelector('.speaking-indicator')) {
+              const indicator = document.createElement('span');
+              indicator.className = 'speaking-indicator';
+              indicator.textContent = ' 🟢';
+              userListElement.appendChild(indicator);
+            }
+          } else {
+            const indicator = userListElement.querySelector('.speaking-indicator');
+            if (indicator) indicator.remove();
+          }
+        }
+        requestAnimationFrame(updateIndicator);
+      }
+      updateIndicator();
+    }
+
+    // Uzak ekran paylaşımı videosunu ekle ve kanal listesindeki ismin yanına ekran simgesi ekle
+    function addScreenVideo(stream, userId) {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.controls = true;
+      video.id = `screen-video-${userId}`;
+      screenVideos.appendChild(video);
+      const userElement = document.getElementById(`user-${userId}`);
+      if (userElement && !userElement.innerHTML.includes('🖥️')) {
+        userElement.innerHTML += ' 🖥️';
+      }
+    }
+
+    /* ========== 3) Socket Olayları ========== */
+    socket.on('chat message', data => { appendChatMessage(data); });
+    socket.on('channelUsers', data => { updateUserList(data.users); });
+    socket.on('new-user', userData => {
+      if (!localStream) return;
+      const peer = new SimplePeer({
+        initiator: true,
+        trickle: false,
+        stream: localStream
+      });
+      // Remote audio akışı geldiğinde, userData.id parametresiyle gönderiyoruz
+      peer.on('stream', remoteStream => { addAudioStream(remoteStream, userData.id); });
+      peer.on('signal', signalData => {
+        socket.emit('signal', { to: userData.id, from: socket.id, signal: signalData, nickname });
+      });
+      peers[userData.id] = peer;
+      playNotificationSound();
+      showTemporaryMessage(`${userData.nickname} katıldı!`);
+    });
+    socket.on('signal', data => {
+      if (data.to !== socket.id) return;
+      if (peers[data.from]) {
+        peers[data.from].signal(data.signal);
+      } else {
+        const peer = new SimplePeer({
+          initiator: false,
+          trickle: false,
+          stream: localStream
+        });
+        peer.on('stream', remoteStream => { addAudioStream(remoteStream, data.from); });
+        peer.on('signal', signalData => {
+          socket.emit('signal', { to: data.from, from: socket.id, signal: signalData, nickname });
+        });
+        peer.signal(data.signal);
+        peers[data.from] = peer;
+      }
+    });
+    socket.on('user-disconnected', user => {
+      if (peers[user.id]) {
+        peers[user.id].destroy();
+        delete peers[user.id];
+      }
+      if (channelUsers[user.id]) { showTemporaryMessage(`${user.nickname} ayrıldı.`); }
+      const li = document.getElementById(`user-${user.id}`);
+      if (li) li.remove();
+      delete channelUsers[user.id];
+    });
+
+    /* ========== 4) Kanal Tıklama (Genel) ========== */
+    document.getElementById('genelChannel').addEventListener('click', () => {
+      document.getElementById('genelChannel').classList.add('active');
+      // Eğer socket bağlantısı kesilmişse yeniden bağlan
+      if (socket.disconnected) { socket.connect(); }
+      socket.emit('joinChannel', { nickname, channel: 'Genel' });
+      if (!localStream) {
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(stream => {
+            localStream = stream;
+            setupAudioLevelDetection(stream);
+          })
+          .catch(err => { console.error('Mikrofona erişim hatası:', err); });
+      }
+    });
+
+    /* ========== 5) Chat Mesajı Gönderme ========== */
+    sendBtn.addEventListener('click', () => {
+      const msg = messageInput.value;
+      if (msg.trim() !== '') {
+        socket.emit('chat message', { msg, nickname });
+        messageInput.value = '';
+      }
+    });
+
+    /* ========== 6) Konuşma Seviyesi (Web Audio API) ========== */
+    function setupAudioLevelDetection(stream) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      microphone = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      microphone.connect(analyser);
+      javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+      analyser.connect(javascriptNode);
+      javascriptNode.connect(audioContext.destination);
+      javascriptNode.onaudioprocess = () => {
+        let array = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(array);
+        let values = 0;
+        for (let i = 0; i < array.length; i++) { values += array[i]; }
+        let average = values / array.length;
+        if (average > 20) { voiceIndicator.classList.add('speaking'); }
+        else { voiceIndicator.classList.remove('speaking'); }
+      };
+    }
+
+    /* ========== 7) Ekran Paylaşımı ========== */
+    screenShareCtrlBtn.addEventListener('click', async () => {
+      if (localScreenStream) {
+        // Eğer ekran paylaşımı aktifle ise, durdur
+        localScreenStream.getTracks().forEach(track => track.stop());
+        localScreenStream = null;
+        screenShareCtrlBtn.textContent = "🖥️ Screen Share";
+      } else {
+        try {
+          localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true
+          });
+          screenShareCtrlBtn.textContent = "🛑 Stop Screen Share";
+          for (let userId in peers) {
+            if (!peers[userId].screenSharePeer) {
+              const screenSharePeer = new SimplePeer({
+                initiator: true,
+                trickle: false,
+                stream: localScreenStream
+              });
+              screenSharePeer.on('signal', signalData => {
+                socket.emit('screenShareSignal', { to: userId, from: socket.id, signal: signalData });
+              });
+              peers[userId].screenSharePeer = screenSharePeer;
+            }
+          }
+          localScreenStream.getVideoTracks()[0].addEventListener('ended', () => {
+            console.log("Ekran paylaşımı bitti");
+            screenShareCtrlBtn.textContent = "🖥️ Screen Share";
+          });
+        } catch (err) {
+          console.error("Ekran paylaşma hatası:", err);
+        }
+      }
+    });
+    socket.on('screenShareSignal', data => {
+      if (data.to !== socket.id) return;
+      if (!peers[data.from].screenSharePeer) {
+        const screenSharePeer = new SimplePeer({
+          initiator: false,
+          trickle: false
+        });
+        screenSharePeer.on('signal', signalData => {
+          socket.emit('screenShareSignal', { to: data.from, from: socket.id, signal: signalData });
+        });
+        screenSharePeer.on('stream', remoteStream => {
+          addScreenVideo(remoteStream, data.from);
+        });
+        peers[data.from].screenSharePeer = screenSharePeer;
+      }
+      peers[data.from].screenSharePeer.signal(data.signal);
+    });
+
+    /* ========== 8) Kontrol Paneli Butonları ========== */
+    // Mute: Kendi mikrofonunu kapat/aç
+    muteBtn.addEventListener('click', () => {
+      if (!localStream) return;
+      isMuted = !isMuted;
+      localStream.getAudioTracks().forEach(track => { track.enabled = !isMuted; });
+      muteBtn.textContent = isMuted ? "🔇 Unmute" : "🔇 Mute";
+    });
+    // Deaf: Gelen remote audio'yu kapat/aç
+    deafBtn.addEventListener('click', () => {
+      isDeaf = !isDeaf;
+      const remoteAudios = document.getElementsByClassName('remoteAudio');
+      for (let i = 0; i < remoteAudios.length; i++) {
+        remoteAudios[i].muted = isDeaf;
+      }
+      deafBtn.textContent = isDeaf ? "🙉 Undeaf" : "🙉 Deaf";
+    });
+    // Disconnect: Mikrofon ve ekran paylaşımını durdur, kanal listesinden isminizi kaldır ve socket bağlantısını kes
+    disconnectBtn.addEventListener('click', () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      if (localScreenStream) {
+        localScreenStream.getTracks().forEach(track => track.stop());
+        localScreenStream = null;
+      }
+      channelUserList.innerHTML = "";  // Kendi adınız da listeden silinsin
+      showTemporaryMessage("Bağlantı kesildi");
+      socket.disconnect();
+    });
+  </script>
+</body>
+</html>
