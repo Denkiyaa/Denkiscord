@@ -73,6 +73,6 @@ function sendChannelUserList(channelName) {
   });
 }
 
-server.listen(3000, () => {
+server.listen(1337, () => {
   console.log('Sunucu çalışıyor: http://localhost:3000');
 });
