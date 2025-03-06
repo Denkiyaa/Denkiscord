@@ -22,7 +22,7 @@ io.on('connection', socket => {
       nickname: data.nickname,
       channel: data.channel
     };
-    // Diğer kullanıcılara yeni kullanıcının geldiğini söyle (ses bağlantısı başlatmaları için)
+    // Diğer kullanıcılara yeni kullanıcının geldiğini bildir
     socket.broadcast.emit('new-user', { id: socket.id, nickname: data.nickname });
     // Herkese güncel kullanıcı listesini gönder
     sendChannelUserList(data.channel);
@@ -39,13 +39,11 @@ io.on('connection', socket => {
 
   // WebRTC (mikrofon) sinyalleri
   socket.on('signal', data => {
-    // data: { to, from, signal, nickname }
     io.to(data.to).emit('signal', data);
   });
 
   // Ekran paylaşımı sinyalleri
   socket.on('screenShareSignal', data => {
-    // data: { to, from, signal }
     io.to(data.to).emit('screenShareSignal', data);
   });
 
@@ -55,7 +53,6 @@ io.on('connection', socket => {
     if (users[socket.id]) {
       const user = { id: socket.id, nickname: users[socket.id].nickname };
       delete users[socket.id];
-      // Herkese bildir
       io.emit('user-disconnected', user);
     }
   });
@@ -66,7 +63,6 @@ function sendChannelUserList(channelName) {
   const channelUsersList = Object.entries(users)
     .filter(([_, u]) => u.channel === channelName)
     .map(([id, u]) => ({ id, nickname: u.nickname }));
-
   io.emit('channelUsers', {
     channel: channelName,
     users: channelUsersList
