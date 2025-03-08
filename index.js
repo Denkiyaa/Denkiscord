@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require("socket.io");
 const multer = require('multer');
 const path = require('path');
+const favicon = require('serve-favicon');
 
 const app = express();
 const server = http.createServer(app);
