@@ -1,7 +1,6 @@
 // controlPanel.js
 
 function initControlPanel() {
-  // Mute butonu
   muteBtn.addEventListener('click', () => {
     if (!localStream) return;
     isMuted = !isMuted;
@@ -13,7 +12,6 @@ function initControlPanel() {
     updateLocalMuteIndicator();
   });
 
-  // Deaf butonu
   deafBtn.addEventListener('click', () => {
     isDeaf = !isDeaf;
     const remoteAudios = document.getElementsByClassName('remoteAudio');
@@ -25,7 +23,6 @@ function initControlPanel() {
     updateLocalDeafIndicator();
   });
 
-  // Disconnect butonu
   disconnectBtn.addEventListener('click', () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -39,16 +36,15 @@ function initControlPanel() {
     showTemporaryMessage("Bağlantı kesildi");
     socket.disconnect();
     controlPanel.style.display = 'none';
-    // Yeniden bağlanabilmek için bayrağı sıfırla
     window.joinedChannel = false;
   });
 
-  // Mic Sensitivity Slider
   micSensitivitySlider.addEventListener('input', (e) => {
     micSensitivity = parseInt(e.target.value);
+    console.log("Mic sensitivity updated:", micSensitivity);
+    showTemporaryMessage(`Mikrofon hassasiyeti: ${micSensitivity}`);
   });
 
-  // Reconnect durumlarını güncelle
   socket.on('reconnect_attempt', () => {
     updateConnectionIndicator(false);
     showTemporaryMessage("Yeniden bağlanılıyor...");
@@ -90,7 +86,6 @@ function updateConnectionIndicator(connected) {
   connectionIndicator.style.background = connected ? "green" : "red";
 }
 
-// Dışarıdan gelen muteStatus ve deafStatus event'leri
 socket.on('muteStatus', data => {
   const li = document.getElementById(`user-${data.id}`);
   if (li) {

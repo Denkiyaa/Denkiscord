@@ -3,7 +3,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.nickname = prompt("Lütfen nickinizi girin:") || "Anonim";
   document.getElementById('nicknameDisplay').textContent = window.nickname;
 
-  // Global bayrak: henüz kanala katılmamış
+  // Global bayrak
   window.joinedChannel = false;
 
   // Modülleri başlat
@@ -12,10 +12,9 @@ window.addEventListener('DOMContentLoaded', () => {
   initScreenShare();
   initControlPanel();
 
-  // "Genel" kanal tıklama eventi
+  // "Genel" kanala tıklama eventi
   document.getElementById('genelChannel').addEventListener('click', () => {
     if (window.joinedChannel) {
-      // Eğer zaten kanalda isek, yeniden bağlanma işlemini tetiklemesin
       showTemporaryMessage("Zaten kanalda bağlısınız");
       return;
     }
@@ -25,7 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     socket.emit('joinChannel', { nickname: window.nickname, channel: 'Genel' });
     controlPanel.style.display = 'flex';
-    initVoice();  // Ses modülünü başlat
+    initVoice(); // Ses modülünü başlatır
     showTemporaryMessage("Genel kanala bağlandınız");
   });
 });

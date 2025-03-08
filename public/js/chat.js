@@ -120,11 +120,14 @@ function updateUserList(users) {
     const li = document.createElement('li');
     li.id = `user-${user.id}`;
     li.textContent = user.nickname;
-    // Sağ tıklama ile ses ayarı için context menu tetiklenir.
-    li.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      openContextMenu(e, user.id);
-    });
+    // Eğer tıklanan kullanıcı, kendiniz değilse sağ tıklama event'ini ekleyin
+    if (user.id !== window.localSocketId) {
+      li.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        openContextMenu(e, user.id);
+      });
+    }
     channelUserList.appendChild(li);
   }
 }
+

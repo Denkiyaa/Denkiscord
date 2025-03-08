@@ -10,6 +10,39 @@
 //     ... modülleri başlat ...
 //   });
 
+window.addEventListener('DOMContentLoaded', () => {
+  // Context Menu öğelerini tanımlayın
+  const contextMenu = document.getElementById('contextMenu');
+  const volumeSlider = document.getElementById('volumeSlider');
+
+  // Volume slider, remote audio elementinin sesini güncelleyecek
+  volumeSlider.addEventListener('input', (e) => {
+    if (window.currentContextUserId && window.remoteAudioElements[window.currentContextUserId]) {
+      window.remoteAudioElements[window.currentContextUserId].volume = e.target.value;
+      console.log("Volume updated for user", window.currentContextUserId, "to", e.target.value);
+    }
+  })
+
+   // openContextMenu fonksiyonunu tanımlıyoruz
+   window.openContextMenu = function(e, userId) {
+    window.currentContextUserId = userId;
+    const audio = window.remoteAudioElements[userId];
+    volumeSlider.value = audio ? audio.volume : 1;
+    contextMenu.style.left = e.pageX + "px";
+    contextMenu.style.top = e.pageY + "px";
+    contextMenu.style.display = 'block';
+    console.log("Context menu opened for user:", userId);
+
+  };
+});
+
+document.addEventListener('click', (e) => {
+  const contextMenu = document.getElementById('contextMenu');
+  // Eğer tıklanan öğe context menü içerisinde değilse, kapat.
+  if (!e.target.closest('#contextMenu')) {
+    contextMenu.style.display = 'none';
+  }
+});
 // Socket.IO istemcisini başlat (burada kalabilir veya app.js'e de alabilirsiniz)
 window.socket = io();
 
@@ -25,7 +58,7 @@ window.microphone = null;
 window.javascriptNode = null;
 
 // Mikrofon hassasiyeti
-window.micSensitivity = 20;
+window.micSensitivity = 10;
 
 // Peer bağlantılarını tutacağımız obje
 window.peers = {};           // { userId: { voicePeer, screenSharePeer } }
