@@ -11,6 +11,8 @@ const io = new Server(server);
 // public klasöründeki dosyaları statik olarak sunar
 app.use(express.static('public'));
 
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
 // Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
 let users = {};
 
