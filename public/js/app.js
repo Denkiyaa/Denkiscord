@@ -27,4 +27,13 @@ window.addEventListener('DOMContentLoaded', () => {
     initVoice(); // Ses modülünü başlatır
     showTemporaryMessage("Genel kanala bağlandınız");
   });
+
+  document.getElementById('micSensitivityControl').addEventListener('click', () => {
+    const slider = document.getElementById('micSensitivitySlider');
+    if (slider.style.display === 'none') {
+      slider.style.display = 'inline-block';
+    } else {
+      slider.style.display = 'none';
+    }
+  });
 });

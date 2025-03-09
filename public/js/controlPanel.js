@@ -1,28 +1,51 @@
 // controlPanel.js
 
 function initControlPanel() {
+  // Mute butonu
   muteBtn.addEventListener('click', () => {
     if (!localStream) return;
     isMuted = !isMuted;
     localStream.getAudioTracks().forEach(track => {
       track.enabled = !isMuted;
     });
-    muteBtn.textContent = isMuted ? "🔇 Unmute" : "🔇 Mute";
+    // Toggle: İkonu güncelle
+    const icon = muteBtn.querySelector('i');
+    if (isMuted) {
+      icon.classList.remove('fa-microphone');
+      icon.classList.add('fa-microphone-slash');
+      muteBtn.dataset.title = "Unmute";
+    } else {
+      icon.classList.remove('fa-microphone-slash');
+      icon.classList.add('fa-microphone');
+      muteBtn.dataset.title = "Mute";
+    }
     socket.emit('muteStatus', { id: socket.id, muted: isMuted, nickname });
     updateLocalMuteIndicator();
   });
 
+  // Deaf butonu
   deafBtn.addEventListener('click', () => {
     isDeaf = !isDeaf;
     const remoteAudios = document.getElementsByClassName('remoteAudio');
     for (let i = 0; i < remoteAudios.length; i++) {
       remoteAudios[i].muted = isDeaf;
     }
-    deafBtn.textContent = isDeaf ? "🙉 Undeaf" : "🙉 Deaf";
+    // Toggle: İkonu güncelle
+    const icon = deafBtn.querySelector('i');
+    if (isDeaf) {
+      icon.classList.remove('fa-headphones-simple');
+      icon.classList.add('fa-volume-xmark');
+      deafBtn.dataset.title = "Undeafen";
+    } else {
+      icon.classList.remove('fa-volume-xmark');
+      icon.classList.add('fa-headphones-simple');
+      deafBtn.dataset.title = "Deafen";
+    }
     socket.emit('deafStatus', { id: socket.id, deaf: isDeaf, nickname });
     updateLocalDeafIndicator();
   });
 
+  // Disconnect butonu
   disconnectBtn.addEventListener('click', () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -39,10 +62,14 @@ function initControlPanel() {
     window.joinedChannel = false;
   });
 
+  // Mic Sensitivity Slider
   micSensitivitySlider.addEventListener('input', (e) => {
     micSensitivity = parseInt(e.target.value);
     console.log("Mic sensitivity updated:", micSensitivity);
     showTemporaryMessage(`Mikrofon hassasiyeti: ${micSensitivity}`);
+    if (window.microphoneGain) {
+      window.microphoneGain.gain.value = micSensitivity / 100;
+    }
   });
 
   socket.on('reconnect_attempt', () => {

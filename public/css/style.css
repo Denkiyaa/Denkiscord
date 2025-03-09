@@ -1,39 +1,367 @@
-/* Temel Düzen */
-body { margin: 0; font-family: Arial, sans-serif; }
-#container { display: flex; height: 100vh; }
+/*styles.css
+/* Ana Düzen */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #36393f;
+    color: #fff;
+}
+
+#container {
+    display: flex;
+    height: 100vh;
+}
+
 /* Sidebar */
-#sidebar { width: 250px; background-color: #2f3136; color: white; display: flex; flex-direction: column; }
-#sidebar h2 { text-align: center; padding: 10px 0; border-bottom: 1px solid #23272a; margin: 0; }
-#channelList { list-style: none; padding: 0; margin: 0; }
-#channelList li { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #23272a; }
-#channelList li.active { background-color: #40444b; }
-#channelUserList { list-style: none; padding: 0; margin: 0; }
-#channelUserList li { padding: 5px 20px; border-bottom: 1px solid #23272a; }
+#sidebar {
+    width: 250px;
+    background-color: #2f3136;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#sidebar h2 {
+    text-align: center;
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    border-bottom: 1px solid #23272a;
+    padding-bottom: 10px;
+}
+
+#channelList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#channelList li {
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: #40444b;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#channelList li.active,
+#channelList li:hover {
+    background-color: #7289da;
+}
+
+#channelUserList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#channelUserList li {
+    padding: 5px 10px;
+    border-bottom: 1px solid #23272a;
+}
+
 /* Main Content */
-#mainContent { flex-grow: 1; background-color: #36393f; color: white; display: flex; flex-direction: column; }
-#chatArea { flex-grow: 1; overflow-y: auto; padding: 10px; background-color: #40444b; }
-#chatInputContainer { display: flex; align-items: center; border-top: 1px solid #23272a; padding: 10px; background-color: #2f3136; }
-#message { flex-grow: 1; padding: 5px; }
-#sendBtn { padding: 5px 10px; margin-left: 10px; }
-#voiceArea { padding: 10px; border-top: 1px solid #23272a; background-color: #2f3136; display: flex; align-items: center; }
-#voiceIndicator { width: 50px; height: 50px; border: 3px solid gray; border-radius: 50%; display: inline-block; margin-right: 10px; text-align: center; line-height: 50px; font-size: 14px; }
-#voiceIndicator.speaking { border-color: green; }
-#nicknameDisplay { font-weight: bold; }
-/* Screen Share */
-#screenVideos { height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background-color: #2f3136; }
-#screenVideos video { width: 300px; border: 2px solid #000; background: #000; }
-/* Temp Message */
-.temp-message { position: fixed; top: 10px; right: 10px; background-color: rgba(0,0,0,0.8); color: #fff; padding: 10px; border-radius: 4px; z-index: 9999; opacity: 0.9; }
-/* Control Panel */
-#controlPanel { position: fixed; bottom: 10px; left: 10px; background-color: rgba(47,49,54,0.9); padding: 10px; border-radius: 4px; z-index: 10000; display: none; gap: 5px; align-items: center; }
-#controlPanel button { padding: 5px 10px; font-size: 14px; border: none; background: #7289da; color: white; border-radius: 4px; cursor: pointer; }
-#controlPanel button:hover { background: #677bc4; }
-#connectionIndicator { font-size: 12px; padding: 2px 6px; border-radius: 4px; background: red; color: white; }
-/* Mic Sensitivity Control */
-#micSensitivityControl { font-size: 12px; color: white; display: flex; align-items: center; gap: 5px; }
+#mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #36393f;
+}
+
+#chatArea {
+    flex: 1;
+    padding: 10px;
+    background-color: #40444b;
+    overflow-y: auto;
+}
+
+.chat-message {
+    margin-bottom: 8px;
+    padding: 8px;
+    background-color: #2f3136;
+    border-radius: 4px;
+}
+
+/* Chat Input */
+#chatInputContainer {
+    display: flex;
+    align-items: center;
+    background-color: #2f3136;
+    border-top: 1px solid #23272a;
+    padding: 10px;
+    gap: 5px;
+}
+
+#message {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    outline: none;
+}
+
+#uploadBtn,
+#sendBtn {
+    padding: 8px 10px;
+    background-color: #7289da;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#uploadBtn:hover,
+#sendBtn:hover {
+    background-color: #677bc4;
+}
+
+#hiddenMediaInput {
+    display: none;
+}
+
+/* Önizleme (Paste) */
+#pastePreviewContainer {
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#pastePreview,
+#pasteVideoPreview {
+    max-width: 80px;
+    max-height: 80px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* VoiceAreaFixed: Nick solda, daire sağda */
+#voiceAreaFixed {
+    position: fixed;
+    bottom: 10px;
+    /* Control panelin altında kalsın */
+    left: 10px;
+    background-color: #2f3136;
+    border-radius: 4px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+    /* Control panel 10000, bu 9999 */
+    /* Genişlik vererek chat inputun altına kaymamasını sağlayabilirsiniz */
+    width: 120px;
+    justify-content: space-between;
+    /* Nick solda, daire sağda */
+}
+
+
+
+#voiceAreaFixed #voiceIndicator {
+    width: 40px;
+    height: 40px;
+    border: 3px solid gray;
+    border-radius: 50%;
+    transition: border-color 0.3s;
+}
+
+#voiceAreaFixed #voiceIndicator.speaking {
+    border-color: green;
+}
+
+/* Nick solda */
+#voiceAreaFixed #nicknameDisplay {
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: auto;
+    /* it to left side */
+    /* Kenar boşlukları */
+    margin-right: auto;
+}
+
+/* Ekran Paylaşımı */
+#screenVideos {
+    padding: 10px;
+    background-color: #2f3136;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+#screenVideos video {
+    width: 300px;
+    border: 2px solid #000;
+    background: #000;
+}
+
+/* Kontrol Paneli */
+#controlPanel {
+    position: fixed;
+    bottom: 80px;
+    left: 10px;
+    background-color: rgba(47, 49, 54, 0.9);
+    padding: 10px;
+    border-radius: 4px;
+    z-index: 10000;
+    display: none;
+    /* Kanala girince gösterirsiniz */
+    gap: 5px;
+    align-items: center;
+}
+
+/* Butonlar */
+#controlPanel button {
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 18px;
+    cursor: pointer;
+    position: relative;
+    /* Hover efekti için transition */
+    transition: background-color 0.2s, transform 0.2s;
+    text-align: center;
+    line-height: 40px;
+    /* İkonu dikey ortalar */
+}
+
+/* Hover efekti: buton biraz büyür, arka plan değişir */
+#controlPanel button:hover {
+    background-color: #40444b;
+    transform: scale(1.1);
+}
+
+/* Tooltip (data-title) */
+#controlPanel button::after {
+    content: attr(data-title);
+    display: none;
+    position: absolute;
+    bottom: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+#controlPanel button:hover::after {
+    display: block;
+    z-index: 9999;
+}
+
+/* Mic Sensitivity benzer yapı */
+#micSensitivityControl {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+}
+
+#micSensitivityControl i {
+    font-size: 18px;
+    cursor: pointer;
+    color: #fff;
+}
+
+#micSensitivitySlider {
+    width: 60px;
+    cursor: pointer;
+}
+
+#micSensitivityControl::after {
+    content: attr(data-title);
+    display: none;
+    position: absolute;
+    bottom: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+#micSensitivityControl:hover::after {
+    display: block;
+    z-index: 9999;
+}
+
+/* Connection Indicator */
+#connectionIndicator {
+    position: absolute;
+    bottom: 55px;
+    margin-left: 5px;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: red;
+    color: white;
+}
+
 /* Context Menu */
-#contextMenu { display: none; position: absolute; background: #fff; border: 1px solid #ccc; padding: 5px; z-index: 20000; border-radius: 4px; }
-#contextMenu label { font-size: 12px; }
-#contextMenu input { margin-left: 5px; }
-/* Remote Audio (gizli) */
-.remoteAudio { display: none; }
+#contextMenu {
+    display: none;
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    z-index: 20000;
+    border-radius: 4px;
+}
+
+#contextMenu label {
+    font-size: 12px;
+    color: #000;
+}
+
+#contextMenu input {
+    margin-left: 5px;
+}
+
+/* Lightbox */
+#lightboxOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    cursor: pointer;
+}
+
+/* Temp Message */
+.temp-message {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    z-index: 9999;
+    opacity: 0.9;
+}
+
+/* Remote Audio */
+.remoteAudio {
+    display: none;
+}

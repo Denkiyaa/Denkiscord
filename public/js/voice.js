@@ -20,6 +20,12 @@ function initVoice() {
 function setupAudioLevelDetection(stream) {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
   microphone = audioContext.createMediaStreamSource(stream);
+
+   // GainNode oluşturuluyor ve globalde saklanıyor
+   window.microphoneGain = audioContext.createGain();
+   // Varsayılan kazanç değeri: 1 (slider değeri 100 olduğunda 1, 0 olduğunda 0)
+   window.microphoneGain.gain.value = 1;
+
   analyser = audioContext.createAnalyser();
   analyser.fftSize = 512;
   microphone.connect(analyser);
@@ -36,7 +42,6 @@ function setupAudioLevelDetection(stream) {
       sum += array[i];
     }
     const average = sum / array.length;
-    console.log("Mic average level:", average);  // Debug log
     
     // micSensitivity global olarak güncelleniyor, eşik değeri olarak kullanıyoruz.
     if (average > micSensitivity) {
