@@ -100,34 +100,41 @@ function initSoundPanel() {
     socket.on('new sound', (soundData) => {
         addSoundCell(soundData);
     });
+
+    // Sunucudan gelen "playSoundEffect" event'ini dinleyip sesi localde çalıyoruz.
+    socket.on('playSoundEffect', (data) => {
+        const audio = new Audio(data.url);
+        // soundVolume değişkeni varsa, onu kullan; yoksa 1
+        audio.volume = (window.soundVolume !== undefined) ? window.soundVolume : 1;
+        audio.play();
+    });
 }
 
-// Yeni ses hücresini grid'e ekleyen fonksiyon
 function addSoundCell(soundData) {
     const grid = document.getElementById('soundGrid');
     const cell = document.createElement('div');
     cell.className = 'sound-cell';
-
+  
+    // Emote
     const emoteDiv = document.createElement('div');
     emoteDiv.className = 'sound-emote';
     emoteDiv.textContent = soundData.emote;
     cell.appendChild(emoteDiv);
-
+  
+    // Name
     const nameDiv = document.createElement('div');
     nameDiv.className = 'sound-name';
     nameDiv.textContent = soundData.name;
     cell.appendChild(nameDiv);
-
-    // Hover effect: CSS yapacağız
-
+  
+    // Tıklayınca sunucuya "playSoundEffect" event'i gönderiyoruz
     cell.addEventListener('click', () => {
-        // Yerel oynatmak yerine sunucuya "playSoundEffect" event'i gönderiyoruz.
-        socket.emit('playSoundEffect', {
-            url: soundData.url,
-            name: soundData.name,
-            emote: soundData.emote
-        });
+      socket.emit('playSoundEffect', {
+        url: soundData.url,
+        name: soundData.name,
+        emote: soundData.emote
+      });
     });
-
+  
     grid.appendChild(cell);
-}
+  }

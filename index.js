@@ -41,7 +41,6 @@ app.post('/upload', upload.single('media'), (req, res) => {
   }
 });
 
-// Socket.IO eventleri
 io.on('connection', socket => {
   console.log('Kullanıcı bağlandı: ' + socket.id);
 
@@ -52,28 +51,27 @@ io.on('connection', socket => {
     };
     socket.broadcast.emit('new-user', { id: socket.id, nickname: data.nickname });
     sendChannelUserList(data.channel);
+    // Yeni kullanıcıya mevcut ses listesini gönderin:
+    socket.emit('soundList', sounds);
+    socket.join(data.channel);
   });
 
   socket.on('chat message', data => {
-    // Her mesajın içinde type ve content alanı olsun:
-    // Örneğin, { nickname, type: "text"|"image"|"video", content }
-    // Eğer text mesajı gönderiliyorsa, type "text" ve content metin olur.
     io.emit('chat message', {
       id: socket.id,
       nickname: data.nickname,
       type: data.type || "text",
       content: data.content || data.msg
     });
+  });
 
-    socket.on('playSoundEffect', data => {
-      // data: { url: soundData.url, name, emote, ... }
-      // Kullanıcının kanalı
-      const userChannel = users[socket.id].channel;
-      // Aynı kanaldaki herkese gönder (kendisi dahil):
-      io.to(userChannel).emit('playSoundEffect', data);
-      // Eğer kendisi hariç diğerlerine göndermek isterseniz:
-      // socket.broadcast.to(userChannel).emit('playSoundEffect', data);
-    });
+  // "playSoundEffect" event listener'ını ayrı tanımlayın:
+  socket.on('playSoundEffect', data => {
+    // data: { url, name, emote, ... }
+    // Kullanıcının kanalı
+    const userChannel = users[socket.id].channel;
+    // Aynı kanaldaki herkese yayın yapıyoruz:
+    io.to(userChannel).emit('playSoundEffect', data);
   });
 
   socket.on('signal', data => {
@@ -95,19 +93,11 @@ io.on('connection', socket => {
 
   // Ses paneli için yeni sound ekleme
   socket.on('new sound', data => {
-    // data: { name, emote, url }
     sounds.push(data);
-    // Tüm kullanıcılara yeni sesi gönder
     io.emit('new sound', data);
   });
-
-  // Yeni bir kullanıcı bağlandığında mevcut sound listesini gönderin
-  socket.on('joinChannel', data => {
-    // ... mevcut joinChannel işlemleri ...
-    // Ayrıca, kullanıcıya mevcut ses listesini gönderin
-    socket.emit('soundList', sounds);
-  });
 });
+
 
 function sendChannelUserList(channelName) {
   const channelUsersList = Object.entries(users)
