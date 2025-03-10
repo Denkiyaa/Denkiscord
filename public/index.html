@@ -18,7 +18,7 @@
   <div id="container">
     <!-- Sol Panel -->
     <div id="sidebar">
-      <h2>Kanallar</h2>
+      <h2>Channels</h2>
       <ul id="channelList">
         <li id="genelChannel" class="active">
           Genel
@@ -64,11 +64,47 @@
       <!-- İsterseniz toggle yaparsınız, yoksa tek ikon kalabilir -->
       <i class="fa-solid fa-desktop"></i>
     </button>
+    <!-- Mikrofon hassasiyeti (control panelde) -->
     <div id="micSensitivityControl" data-title="Mic Sensitivity">
       <i class="fa-solid fa-sliders"></i>
       <input type="range" id="micSensitivitySlider" min="1" max="100" value="20" style="display: none;">
     </div>
+    <button id="soundPanelBtn" data-title="Sounds">
+      <i class="fa-solid fa-music"></i>
+    </button>
     <div id="connectionIndicator"></div>
+  </div>
+
+  <!-- Sound Panel (Popup) -->
+  <div id="soundPanel" style="display: none;">
+    <div id="soundPanelHeader">
+      <h3>Sound Effects</h3>
+      <!-- Ses seviyesi slider'ı panelin üst kısmında -->
+      <div id="soundVolumeControl" data-title="Sound Volume">
+        <i class="fa-solid fa-volume-high"></i>
+        <input type="range" id="soundVolumeSlider" min="0" max="1" step="0.01" value="1" style="display: none;">
+      </div>
+      <button id="addSoundBtn">+ Add New Sound</button>
+    </div>
+    <div id="soundGrid">
+      <!-- .sound-cell öğeleri buraya eklenecek (dinamik) -->
+    </div>
+  </div>
+
+
+  <!-- Ses Ekleme Modal (Popup) -->
+  <div id="soundAddModal" style="display: none;">
+    <div id="soundAddModalContent">
+      <h3>Add New Sound</h3>
+      <label>Sound Name:</label>
+      <input type="text" id="soundNameInput" />
+      <label>Emote (Emoji):</label>
+      <input type="text" id="soundEmoteInput" placeholder="örn: 🔔" />
+      <label>Sound File:</label>
+      <input type="file" id="soundFileInput" accept="audio/*" />
+      <button id="soundAddConfirmBtn">Add Sound</button>
+      <button id="soundAddCancelBtn">Cancel</button>
+    </div>
   </div>
 
   <!-- "Sen (nickname)" için ayrı bir sabit kutu -->
@@ -95,6 +131,7 @@
   <script src="js/voice.js" defer></script>
   <script src="js/screenShare.js" defer></script>
   <script src="js/controlPanel.js" defer></script>
+  <script src="js/soundPanel.js" defer></script>
   <script src="js/app.js" defer></script>
 
   <!-- Medya Yükleme ve Paste İşlemleri -->

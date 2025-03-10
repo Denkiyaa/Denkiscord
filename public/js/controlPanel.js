@@ -109,7 +109,7 @@ function updateLocalDeafIndicator() {
 }
 
 function updateConnectionIndicator(connected) {
-  connectionIndicator.textContent = connected ? "Bağlı" : "Bağlantı kesildi";
+  connectionIndicator.textContent = connected ? "Connected" : "Disconnected";
   connectionIndicator.style.background = connected ? "green" : "red";
 }
 

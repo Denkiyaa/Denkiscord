@@ -11,6 +11,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initChat();
   initScreenShare();
   initControlPanel();
+  initSoundPanel();
 
   // "Genel" kanala tıklama eventi
   document.getElementById('genelChannel').addEventListener('click', () => {

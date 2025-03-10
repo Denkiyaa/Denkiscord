@@ -9,6 +9,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+let sounds = []; // Tüm eklenmiş sesler burada saklanacak
+
 // public klasöründeki dosyaları statik olarak sunar
 app.use(express.static('public'));
 
@@ -79,6 +81,21 @@ io.on('connection', socket => {
       delete users[socket.id];
       io.emit('user-disconnected', user);
     }
+  });
+
+  // Ses paneli için yeni sound ekleme
+  socket.on('new sound', data => {
+    // data: { name, emote, url }
+    sounds.push(data);
+    // Tüm kullanıcılara yeni sesi gönder
+    io.emit('new sound', data);
+  });
+
+  // Yeni bir kullanıcı bağlandığında mevcut sound listesini gönderin
+  socket.on('joinChannel', data => {
+    // ... mevcut joinChannel işlemleri ...
+    // Ayrıca, kullanıcıya mevcut ses listesini gönderin
+    socket.emit('soundList', sounds);
   });
 });
 
