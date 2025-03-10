@@ -7,7 +7,14 @@ const favicon = require('serve-favicon');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+const io = new Server(server, {
+  cors: {
+    origin: "https://dc.craftedfromfilament.com", // veya "*"
+    methods: ["GET", "POST"]
+  }
+});
+
 
 let sounds = []; // Tüm eklenmiş sesler burada saklanacak
 
