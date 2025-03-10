@@ -64,6 +64,16 @@ io.on('connection', socket => {
       type: data.type || "text",
       content: data.content || data.msg
     });
+
+    socket.on('playSoundEffect', data => {
+      // data: { url: soundData.url, name, emote, ... }
+      // Kullanıcının kanalı
+      const userChannel = users[socket.id].channel;
+      // Aynı kanaldaki herkese gönder (kendisi dahil):
+      io.to(userChannel).emit('playSoundEffect', data);
+      // Eğer kendisi hariç diğerlerine göndermek isterseniz:
+      // socket.broadcast.to(userChannel).emit('playSoundEffect', data);
+    });
   });
 
   socket.on('signal', data => {

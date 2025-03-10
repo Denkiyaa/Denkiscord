@@ -120,12 +120,13 @@ function addSoundCell(soundData) {
 
     // Hover effect: CSS yapacağız
 
-    // Tıklandığında ses çal (volume slider'ın global değeri kullanılır)
     cell.addEventListener('click', () => {
-        const audio = new Audio(soundData.url);
-        // Eğer global soundVolume tanımlıysa, ses seviyesini ayarla; varsayılan 1
-        audio.volume = window.soundVolume !== undefined ? window.soundVolume : 1;
-        audio.play();
+        // Yerel oynatmak yerine sunucuya "playSoundEffect" event'i gönderiyoruz.
+        socket.emit('playSoundEffect', {
+            url: soundData.url,
+            name: soundData.name,
+            emote: soundData.emote
+        });
     });
 
     grid.appendChild(cell);
