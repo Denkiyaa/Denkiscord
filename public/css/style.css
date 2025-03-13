@@ -110,15 +110,16 @@ body {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    /* Birden fazla dosya için satır kaydırma */
 }
 
+/* Her preview öğesi için wrapper */
 .preview-item {
     width: 80px;
     height: 80px;
     position: relative;
 }
 
+/* Resim veya video */
 .preview-item img,
 .preview-item video {
     width: 100%;
@@ -127,6 +128,23 @@ body {
     border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
+}
+
+/* Kapatma butonu: Sağ üst köşe */
+.preview-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 2;
 }
 
 /* Chat Input */

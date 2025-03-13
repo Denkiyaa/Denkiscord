@@ -292,55 +292,74 @@ async function uploadFile(file) {
 }
 
 async function showPastePreview(file) {
-  // Sadece 5'ten fazla dosya eklenmesin
+  // Eğer 5 dosya sınırını aşarsa, eklemeyi engelle
   if (pendingFiles.length >= 5) {
     console.log("En fazla 5 dosya desteklenir.");
     return;
   }
-  
-  // Belirle: image veya video
+
   const fileType = file.type.startsWith("image/") ? "image" : "video";
-  
-  // Önizleme alanını görünür yap
+
+  // Önizleme container'ı görünür yap
   pastePreviewContainer.style.display = 'flex';
 
-  // Preview öğesi oluştur
+  // Her dosya için bir preview öğesi oluşturacağımız wrapper
   const previewWrapper = document.createElement('div');
   previewWrapper.className = 'preview-item';
+  // Position relative, böylece kapatma butonu absolute konumlandırılabilir
+  previewWrapper.style.position = 'relative';
 
   if (fileType === "image") {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = document.createElement('img');
       img.src = e.target.result;
+      img.alt = 'Önizleme';
       previewWrapper.appendChild(img);
+
+      // Üzerine tıklandığında lightbox aç (büyük boy resim gösterimi)
+      img.addEventListener('click', () => {
+        openLightbox(img.src, false);
+      });
     };
     reader.readAsDataURL(file);
   } else if (fileType === "video") {
-    // Video için URL.createObjectURL kullanabiliriz
+    // Video için URL.createObjectURL kullanarak önizleme yapalım
     const video = document.createElement('video');
     video.src = URL.createObjectURL(file);
-    video.muted = true;      // Autoplay için gerekli olabilir
+    video.muted = true;  // autoplay için gerekebilir
     video.playsInline = true;
     video.style.maxWidth = "80px";
     video.style.maxHeight = "80px";
     previewWrapper.appendChild(video);
+
+    // Video önizlemesine tıklandığında lightbox aç (büyük boy video, kontroller açık)
+    video.addEventListener('click', () => {
+      openLightbox(video.src, true);
+    });
   }
-  
-  // Tıklayınca, o preview öğesini kaldırarak dosyayı iptal etsin
-  previewWrapper.addEventListener('click', () => {
-    // pendingFiles'den kaldır
+
+  // Kapatma butonu ekleyelim (sağ üst köşe)
+  const removeBtn = document.createElement('span');
+  removeBtn.className = 'preview-remove';
+  removeBtn.innerHTML = '&times;'; // "×" sembolü
+  // Stil için CSS ile konumlandırılacak, ayrıca tıklama olayını ekleyelim:
+  removeBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Tıklamayı preview öğesine iletmeyelim
+    // pendingFiles dizisinden bu öğeyi çıkarın:
     pendingFiles = pendingFiles.filter(item => item.preview !== previewWrapper);
     pastePreviewContainer.removeChild(previewWrapper);
     if (pendingFiles.length === 0) {
       pastePreviewContainer.style.display = 'none';
     }
   });
-  
-  // Önizleme alanına ekle
+  previewWrapper.appendChild(removeBtn);
+
+  // Önizleme container'ına ekleyin ve pendingFiles dizisine ekleyin:
   pastePreviewContainer.appendChild(previewWrapper);
   pendingFiles.push({ file: file, preview: previewWrapper });
 }
+
 
 function clearPreview() {
   pendingFiles = [];
