@@ -105,7 +105,7 @@ function initSoundPanel() {
     socket.on('playSoundEffect', (data) => {
         const audio = new Audio(data.url);
         // soundVolume değişkeni varsa, onu kullan; yoksa 1
-        audio.volume = (window.soundVolume !== undefined) ? window.soundVolume : 1;
+        audio.volume = (window.soundVolume !== undefined) ? window.soundVolume : 0.5;
         audio.play();
     });
 }
