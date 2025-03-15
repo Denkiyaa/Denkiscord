@@ -92,8 +92,10 @@ function initSoundPanel() {
 
     // Gelen ses listesini dinle: Eski sesleri ekrana yerleştir.
     socket.on('soundList', (soundArray) => {
+        const grid = document.getElementById('soundGrid');
+        grid.innerHTML = '';  // Mevcut ses paneli içeriğini temizle
         soundArray.forEach(soundData => addSoundCell(soundData));
-    });
+      });
     // Yeni eklenen ses için
     socket.on('new sound', (soundData) => {
         addSoundCell(soundData);
