@@ -4,6 +4,8 @@ const { Server } = require("socket.io");
 const multer = require('multer');
 const path = require('path');
 const favicon = require('serve-favicon');
+const fs = require('fs');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -25,10 +27,25 @@ const io = new Server(server, {
   }
 });
 
+<<<<<<< HEAD
 // Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
 let users = {};
 
+=======
+const soundsFile = path.join(__dirname, 'sounds.json');
+>>>>>>> b76fd4a6f706e936e949c5d464c764654a6a5f38
 let sounds = []; // Tüm eklenmiş sesler burada saklanacak
+
+// Mevcut sounds.json dosyasını oku (varsa)
+if (fs.existsSync(soundsFile)) {
+  try {
+    const data = fs.readFileSync(soundsFile, 'utf-8');
+    sounds = JSON.parse(data);
+  } catch (err) {
+    console.error("Sounds dosyası okunurken hata oluştu:", err);
+    sounds = [];
+  }
+}
 
 // public klasöründeki dosyaları statik olarak sunar
 app.use(express.static('public'));
@@ -109,6 +126,11 @@ io.on('connection', socket => {
   // Ses paneli için yeni sound ekleme
   socket.on('new sound', data => {
     sounds.push(data);
+    fs.writeFile(soundsFile, JSON.stringify(sounds, null, 2), (err) => {
+      if (err) {
+        console.error("Sounds dosyası kaydedilirken hata oluştu:", err);
+      }
+    });
     io.emit('new sound', data);
   });
 });

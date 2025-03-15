@@ -71,17 +71,80 @@ body {
 }
 
 #chatArea {
-    flex: 1;
-    padding: 10px;
-    background-color: #40444b;
+    width: 1700px;
+    /* Sabit genişlik (örnek) */
+    height: 650px;
+    /* Sabit yükseklik (örnek) */
     overflow-y: auto;
+    /* Fazladan içerik için dikey kaydırma */
+    background-color: #40444b;
+    margin: 0 auto;
+    /* Ortalamak isterseniz */
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .chat-message {
-    margin-bottom: 8px;
+    text-align: left;
+    margin-bottom: 10px;
     padding: 8px;
     background-color: #2f3136;
     border-radius: 4px;
+    color: #fff;
+}
+
+.chat-message img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 5px;
+}
+
+#pastePreviewContainer {
+    display: none;
+    /* Başlangıçta gizli */
+    margin: 5px;
+    padding: 5px;
+    border: 1px dashed #ccc;
+    min-height: 50px;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Her preview öğesi için wrapper */
+.preview-item {
+    width: 80px;
+    height: 80px;
+    position: relative;
+}
+
+/* Resim veya video */
+.preview-item img,
+.preview-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Kapatma butonu: Sağ üst köşe */
+.preview-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 2;
 }
 
 /* Chat Input */
@@ -120,14 +183,6 @@ body {
 
 #hiddenMediaInput {
     display: none;
-}
-
-/* Önizleme (Paste) */
-#pastePreviewContainer {
-    margin: 5px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 #pastePreview,

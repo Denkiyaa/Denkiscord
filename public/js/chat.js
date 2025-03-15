@@ -1,26 +1,83 @@
 // chat.js
 
 function initChat() {
-  sendBtn.addEventListener('click', () => {
-    const msg = messageInput.value.trim();
-    if (msg !== '') {
-      // Metin mesajı gönder (varsayılan tip "text")
-      socket.emit('chat message', { 
-        nickname, 
-        type: "text", 
-        content: msg 
+  // Gönder butonuna tıklama
+  sendBtn.addEventListener('click', async () => {
+    const textMsg = messageInput.value.trim();
+
+    // 1) Pending dosyalar varsa önce yükle
+    if (pendingFiles.length > 0) {
+      // Tüm pendingFiles için ayrı ayrı upload işlemi yapalım
+      for (let fileObj of pendingFiles) {
+        const url = await uploadFile(fileObj.file);
+        if (url) {
+          let fileType = "image";
+          if (fileObj.file.type.startsWith("video/")) fileType = "video";
+          socket.emit('chat message', {
+            nickname,
+            type: fileType,
+            content: url
+          });
+        }
+      }
+      clearPreview();
+    }
+
+    // 2) Metin mesajı varsa gönder
+    if (textMsg) {
+      socket.emit('chat message', {
+        nickname,
+        type: "text",
+        content: textMsg
       });
       messageInput.value = '';
     }
   });
 
+  // Enter tuşuyla gönderme (sendBtn'in callback'inden bağımsız)
   messageInput.addEventListener('keydown', (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       sendBtn.click();
     }
   });
+
+  // CTRL+V ile yapıştırma
+  document.addEventListener('paste', async (e) => {
+    if (e.clipboardData?.items) {
+      for (let i = 0; i < e.clipboardData.items.length; i++) {
+        const item = e.clipboardData.items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+            await showPastePreview(file);
+          }
+        }
+      }
+    }
+  });
+
+  // Upload butonuna tıklayınca gizli input'u tetikle (eğer pendingFiles doluysa, tekrar seçim açılmasın)
+  uploadBtn.addEventListener('click', () => {
+    if (pendingFiles.length > 0) {
+      console.log("Dosya(lar) zaten seçili, önce iptal edin veya gönderin.");
+      return;
+    }
+    console.log("Upload button clicked");
+    hiddenMediaInput.click();
+  });
+
+  // Gizli input'ta dosya seçilince
+  hiddenMediaInput.addEventListener('change', async () => {
+    // Eğer birden fazla dosya seçilebiliyorsa (input 'multiple' özelliği eklenmişse)
+    const files = hiddenMediaInput.files;
+    for (let i = 0; i < files.length && pendingFiles.length < 5; i++) {
+      await showPastePreview(files[i]);
+    }
+    hiddenMediaInput.value = '';
+  });
 }
+
 
 /**
  * Gelen mesajı chat alanında render eder.
@@ -131,3 +188,181 @@ function updateUserList(users) {
   }
 }
 
+// Global değişkenler:
+let pendingFiles = []; // { file, preview } objeleri saklanacak
+let pendingFileType = null;
+
+// Bu fonksiyon, DOM yüklendikten sonra butonlara event listener ekler
+function initMediaUpload() {
+  const uploadBtn = document.getElementById('uploadBtn');
+  const hiddenMediaInput = document.getElementById('hiddenMediaInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const messageInput = document.getElementById('message');
+
+  if (!uploadBtn || !hiddenMediaInput) {
+    console.error("uploadBtn veya hiddenMediaInput bulunamadı!");
+    return;
+  }
+  console.log("pendingFile:", pendingFile);
+  // "📎" butonuna tıklayınca gizli input'u tetikle
+  uploadBtn.addEventListener('click', () => {
+    if (pendingFile) {
+      console.log("Dosya zaten seçili, önce iptal edin veya gönderin.");
+      return;
+    }
+    console.log("Upload button clicked");
+    hiddenMediaInput.click();
+  });
+
+  // Dosya seçildiğinde
+  hiddenMediaInput.addEventListener('change', async () => {
+    const file = hiddenMediaInput.files[0];
+    if (!file) return;
+    // İsteğe bağlı: gösterim veya 'pendingFile' saklama
+    await showPreview(file);
+  });
+
+  // Gönder butonuna tıklayınca: hem metin mesajı hem de varsa pendingFile yollayabilirsiniz
+  sendBtn.addEventListener('click', async () => {
+    const textMsg = messageInput.value.trim();
+
+    // 1) Dosya varsa önce yükle (örnek)
+    if (pendingFile) {
+      const url = await uploadFile(pendingFile);
+      if (url) {
+        // Chat’e image/video mesajı olarak gönder
+        let fileType = "image";
+        if (pendingFile.type.startsWith("video/")) fileType = "video";
+
+        socket.emit('chat message', {
+          nickname,
+          type: fileType,
+          content: url
+        });
+      }
+      pendingFile = null;
+      pendingFileType = null;
+    }
+
+    // 2) Metin mesajı varsa gönder
+    if (textMsg) {
+      socket.emit('chat message', {
+        nickname,
+        type: "text",
+        content: textMsg
+      });
+      messageInput.value = '';
+    }
+  });
+}
+
+// Örnek: dosya önizleme (isteğe bağlı)
+async function showPreview(file) {
+  pendingFile = file;
+  if (file.type.startsWith("image/")) {
+    pendingFileType = "image";
+    // isterseniz küçük bir <img> önizlemesi yapabilirsiniz
+    console.log("Resim dosyası seçildi:", file.name);
+  } else if (file.type.startsWith("video/")) {
+    pendingFileType = "video";
+    console.log("Video dosyası seçildi:", file.name);
+  } else {
+    console.log("Desteklenmeyen dosya tipi");
+    pendingFile = null;
+  }
+}
+
+async function uploadFile(file) {
+  try {
+    const formData = new FormData();
+    formData.append('media', file);
+    const res = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.fileUrl) {
+      console.log("Dosya yüklendi, URL:", data.fileUrl);
+      return data.fileUrl;
+    }
+  } catch (err) {
+    console.error("Yükleme hatası:", err);
+  }
+  return null;
+}
+
+async function showPastePreview(file) {
+  // Eğer 5 dosya sınırını aşarsa, eklemeyi engelle
+  if (pendingFiles.length >= 5) {
+    console.log("En fazla 5 dosya desteklenir.");
+    return;
+  }
+
+  const fileType = file.type.startsWith("image/") ? "image" : "video";
+
+  // Önizleme container'ı görünür yap
+  pastePreviewContainer.style.display = 'flex';
+
+  // Her dosya için bir preview öğesi oluşturacağımız wrapper
+  const previewWrapper = document.createElement('div');
+  previewWrapper.className = 'preview-item';
+  // Position relative, böylece kapatma butonu absolute konumlandırılabilir
+  previewWrapper.style.position = 'relative';
+
+  if (fileType === "image") {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.alt = 'Önizleme';
+      previewWrapper.appendChild(img);
+
+      // Üzerine tıklandığında lightbox aç (büyük boy resim gösterimi)
+      img.addEventListener('click', () => {
+        openLightbox(img.src, false);
+      });
+    };
+    reader.readAsDataURL(file);
+  } else if (fileType === "video") {
+    // Video için URL.createObjectURL kullanarak önizleme yapalım
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.muted = true;  // autoplay için gerekebilir
+    video.playsInline = true;
+    video.style.maxWidth = "80px";
+    video.style.maxHeight = "80px";
+    previewWrapper.appendChild(video);
+
+    // Video önizlemesine tıklandığında lightbox aç (büyük boy video, kontroller açık)
+    video.addEventListener('click', () => {
+      openLightbox(video.src, true);
+    });
+  }
+
+  // Kapatma butonu ekleyelim (sağ üst köşe)
+  const removeBtn = document.createElement('span');
+  removeBtn.className = 'preview-remove';
+  removeBtn.innerHTML = '&times;'; // "×" sembolü
+  // Stil için CSS ile konumlandırılacak, ayrıca tıklama olayını ekleyelim:
+  removeBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Tıklamayı preview öğesine iletmeyelim
+    // pendingFiles dizisinden bu öğeyi çıkarın:
+    pendingFiles = pendingFiles.filter(item => item.preview !== previewWrapper);
+    pastePreviewContainer.removeChild(previewWrapper);
+    if (pendingFiles.length === 0) {
+      pastePreviewContainer.style.display = 'none';
+    }
+  });
+  previewWrapper.appendChild(removeBtn);
+
+  // Önizleme container'ına ekleyin ve pendingFiles dizisine ekleyin:
+  pastePreviewContainer.appendChild(previewWrapper);
+  pendingFiles.push({ file: file, preview: previewWrapper });
+}
+
+
+function clearPreview() {
+  pendingFiles = [];
+  pastePreviewContainer.innerHTML = '';
+  pastePreviewContainer.style.display = 'none';
+}
