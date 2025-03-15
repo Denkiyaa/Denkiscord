@@ -27,13 +27,9 @@ const io = new Server(server, {
   }
 });
 
-<<<<<<< HEAD
 // Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
 let users = {};
 
-=======
-const soundsFile = path.join(__dirname, 'sounds.json');
->>>>>>> b76fd4a6f706e936e949c5d464c764654a6a5f38
 let sounds = []; // Tüm eklenmiş sesler burada saklanacak
 
 // Mevcut sounds.json dosyasını oku (varsa)
