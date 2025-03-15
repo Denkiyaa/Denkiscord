@@ -95,7 +95,7 @@ function initSoundPanel() {
         const grid = document.getElementById('soundGrid');
         grid.innerHTML = '';  // Mevcut ses paneli içeriğini temizle
         soundArray.forEach(soundData => addSoundCell(soundData));
-      });
+    });
     // Yeni eklenen ses için
     socket.on('new sound', (soundData) => {
         addSoundCell(soundData);
@@ -112,6 +112,10 @@ function initSoundPanel() {
 
 function addSoundCell(soundData) {
     const grid = document.getElementById('soundGrid');
+    // Eğer zaten bu sound id'sine sahip bir öğe varsa, ekleme yapma
+    if (document.getElementById(`sound-cell-${soundData.id}`)) {
+        return;
+    }
     const cell = document.createElement('div');
     cell.className = 'sound-cell';
 
