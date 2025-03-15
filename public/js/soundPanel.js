@@ -38,7 +38,7 @@ function initSoundPanel() {
         soundAddModal.style.display = 'none';
     });
 
-    // "Add Sound" butonu: formdaki verileri al, dosyayı yükle, sonra sound paneline ekle
+    // Örneğin, soundAddConfirmBtn event listener'ında:
     soundAddConfirmBtn.addEventListener('click', async () => {
         const name = document.getElementById('soundNameInput').value.trim();
         const emote = document.getElementById('soundEmoteInput').value.trim() || '🔔';
@@ -49,12 +49,12 @@ function initSoundPanel() {
             return;
         }
 
-        // Dosya yükleme (örneğin, /upload rotası kullanılabilir; sunucu tarafında audio dosyalarını da kabul edecek şekilde)
         let soundUrl = null;
         try {
             const formData = new FormData();
             formData.append('media', file);
-            const res = await fetch('/upload', { method: 'POST', body: formData });
+            // Yeni rota: /upload-sound
+            const res = await fetch('/upload-sound', { method: 'POST', body: formData });
             const data = await res.json();
             soundUrl = data.fileUrl;
         } catch (err) {
@@ -62,17 +62,15 @@ function initSoundPanel() {
             return;
         }
 
-        // Yeni sesi eklemek için sunucuya gönder (global sound listesine eklenmesi için)
         const newSound = { name, emote, url: soundUrl };
         socket.emit('new sound', newSound);
 
-        // Modal kapat
         soundAddModal.style.display = 'none';
-        // Temizle form alanları (isteğe bağlı)
         document.getElementById('soundNameInput').value = '';
         document.getElementById('soundEmoteInput').value = '';
         document.getElementById('soundFileInput').value = '';
     });
+
 
     // Tıklayınca slider aç/kapa
     soundVolumeControl.addEventListener('click', () => {
@@ -114,27 +112,27 @@ function addSoundCell(soundData) {
     const grid = document.getElementById('soundGrid');
     const cell = document.createElement('div');
     cell.className = 'sound-cell';
-  
+
     // Emote
     const emoteDiv = document.createElement('div');
     emoteDiv.className = 'sound-emote';
     emoteDiv.textContent = soundData.emote;
     cell.appendChild(emoteDiv);
-  
+
     // Name
     const nameDiv = document.createElement('div');
     nameDiv.className = 'sound-name';
     nameDiv.textContent = soundData.name;
     cell.appendChild(nameDiv);
-  
+
     // Tıklayınca sunucuya "playSoundEffect" event'i gönderiyoruz
     cell.addEventListener('click', () => {
-      socket.emit('playSoundEffect', {
-        url: soundData.url,
-        name: soundData.name,
-        emote: soundData.emote
-      });
+        socket.emit('playSoundEffect', {
+            url: soundData.url,
+            name: soundData.name,
+            emote: soundData.emote
+        });
     });
-  
+
     grid.appendChild(cell);
-  }
+}

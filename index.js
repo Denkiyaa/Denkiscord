@@ -8,6 +8,16 @@ const favicon = require('serve-favicon');
 const app = express();
 const server = http.createServer(app);
 
+require('dotenv').config();
+
+const mysql = require('mysql2');
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
+
 const io = new Server(server, {
   cors: {
     origin: "https://dc.craftedfromfilament.com", // veya "*"
@@ -15,36 +25,34 @@ const io = new Server(server, {
   }
 });
 
+// Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
+let users = {};
 
 let sounds = []; // Tüm eklenmiş sesler burada saklanacak
 
 // public klasöründeki dosyaları statik olarak sunar
 app.use(express.static('public'));
-
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
-// Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
-let users = {};
-
-// Multer konfigürasyonu: Dosyalar public/uploads klasörüne kaydedilecek
-const storage = multer.diskStorage({
+// Ses dosyaları için özel multer instance'ı: public/uploads/soundpanel içine kaydedilsin
+const soundStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public/uploads'));
+    cb(null, path.join(__dirname, 'public/uploads/soundpanel'));
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
   }
 });
-const upload = multer({ storage });
+const uploadSound = multer({ storage: soundStorage });
 
-// Görsel / Video Yükleme Rotası
-app.post('/upload', upload.single('media'), (req, res) => {
+// Ses dosyası yükleme rotası
+app.post('/upload-sound', uploadSound.single('media'), (req, res) => {
   if (req.file) {
-    // Public klasör statik sunulduğundan, dosya URL'si aşağıdaki gibidir:
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // public dizin statik sunulduğundan, dosya URL'si:
+    const fileUrl = `/uploads/soundpanel/${req.file.filename}`;
     res.json({ fileUrl });
   } else {
-    res.status(400).json({ error: "Dosya yüklenemedi" });
+    res.status(400).json({ error: 'Dosya yüklenemedi' });
   }
 });
 
