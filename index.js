@@ -5,20 +5,18 @@ const multer = require('multer');
 const path = require('path');
 const favicon = require('serve-favicon');
 const fs = require('fs');
-
-
-const app = express();
-const server = http.createServer(app);
-
 require('dotenv').config();
 
 const mysql = require('mysql2');
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST,      // .env'de tanımlı
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME
 });
+
+const app = express();
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
@@ -27,21 +25,8 @@ const io = new Server(server, {
   }
 });
 
-// Kullanıcıları (socket.id -> { nickname, channel }) şeklinde tutacağız
+// Kullanıcıları (socket.id -> { nickname, channel })
 let users = {};
-
-let sounds = []; // Tüm eklenmiş sesler burada saklanacak
-
-// Mevcut sounds.json dosyasını oku (varsa)
-if (fs.existsSync(soundsFile)) {
-  try {
-    const data = fs.readFileSync(soundsFile, 'utf-8');
-    sounds = JSON.parse(data);
-  } catch (err) {
-    console.error("Sounds dosyası okunurken hata oluştu:", err);
-    sounds = [];
-  }
-}
 
 // public klasöründeki dosyaları statik olarak sunar
 app.use(express.static('public'));
@@ -61,7 +46,6 @@ const uploadSound = multer({ storage: soundStorage });
 // Ses dosyası yükleme rotası
 app.post('/upload-sound', uploadSound.single('media'), (req, res) => {
   if (req.file) {
-    // public dizin statik sunulduğundan, dosya URL'si:
     const fileUrl = `/uploads/soundpanel/${req.file.filename}`;
     res.json({ fileUrl });
   } else {
@@ -69,6 +53,7 @@ app.post('/upload-sound', uploadSound.single('media'), (req, res) => {
   }
 });
 
+// Socket.IO eventleri
 io.on('connection', socket => {
   console.log('Kullanıcı bağlandı: ' + socket.id);
 
@@ -79,8 +64,16 @@ io.on('connection', socket => {
     };
     socket.broadcast.emit('new-user', { id: socket.id, nickname: data.nickname });
     sendChannelUserList(data.channel);
-    // Yeni kullanıcıya mevcut ses listesini gönderin:
-    socket.emit('soundList', sounds);
+
+    // Veritabanından mevcut ses listesini çekip gönderin
+    db.query("SELECT * FROM sounds", (err, results) => {
+      if (err) {
+        console.error("Sounds veritabanı hatası:", err);
+      } else {
+        socket.emit('soundList', results);
+      }
+    });
+
     socket.join(data.channel);
   });
 
@@ -93,12 +86,8 @@ io.on('connection', socket => {
     });
   });
 
-  // "playSoundEffect" event listener'ını ayrı tanımlayın:
   socket.on('playSoundEffect', data => {
-    // data: { url, name, emote, ... }
-    // Kullanıcının kanalı
     const userChannel = users[socket.id].channel;
-    // Aynı kanaldaki herkese yayın yapıyoruz:
     io.to(userChannel).emit('playSoundEffect', data);
   });
 
@@ -119,18 +108,20 @@ io.on('connection', socket => {
     }
   });
 
-  // Ses paneli için yeni sound ekleme
+  // Ses paneli için yeni sound ekleme: DB'ye kaydetme
   socket.on('new sound', data => {
-    sounds.push(data);
-    fs.writeFile(soundsFile, JSON.stringify(sounds, null, 2), (err) => {
+    const insertQuery = "INSERT INTO sounds (name, emote, url) VALUES (?, ?, ?)";
+    const values = [data.name, data.emote, data.url];
+    db.query(insertQuery, values, (err, result) => {
       if (err) {
-        console.error("Sounds dosyası kaydedilirken hata oluştu:", err);
+        console.error("Yeni ses ekleme hatası:", err);
+        return;
       }
+      // Başarılı ise, yeni sesi tüm kullanıcılara gönderin
+      io.emit('new sound', { id: result.insertId, ...data });
     });
-    io.emit('new sound', data);
   });
 });
-
 
 function sendChannelUserList(channelName) {
   const channelUsersList = Object.entries(users)
