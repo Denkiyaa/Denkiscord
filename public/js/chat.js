@@ -75,17 +75,17 @@ function initChat() {
   });
 }
 
-function playNotificationSound() {
+window.playNotificationSound = function () {
   const audio = new Audio('/systemsounds/notify.mp3'); // Bildirim ses dosyasının yolu
   audio.play().catch(err => console.error("Bildirim sesi çalınamadı:", err));
 }
 
-function playUserJoinSound() {
+window.playUserJoinSound = function () {
   const audio = new Audio('/systemsounds/join.mp3');
   audio.play().catch(err => console.error("Kullanıcı girişi sesi çalınamadı:", err));
 }
 
-function playUserLeaveSound() {
+window.playUserLeaveSound = function () {
   const audio = new Audio('/systemsounds/leave.mp3');
   audio.play().catch(err => console.error("Kullanıcı çıkış sesi çalınamadı:", err));
 }
