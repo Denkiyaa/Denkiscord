@@ -1,5 +1,4 @@
 // socket.js
-
 const socket = io();
 
 socket.on('connect', () => {
@@ -30,12 +29,23 @@ function initSocket() {
     showTemporaryMessage("Bağlantı kesildi");
   });
 
-  socket.on('chat message', data => { appendChatMessage(data); });
+  socket.on('chat message', data => {
+    appendChatMessage(data);
+    playNotificationSound();
+    updateChatBadge(1); // Bildirim için badge güncellemesi örneği
+  });
 
   socket.on('channelUsers', data => { updateUserList(data.users); });
 
   socket.on('new-user', userData => {
+    // Tüm kullanıcılar için join bildirimi
+    playUserJoinSound();
+    showBrowserNotification("Kullanıcı Katıldı", `${userData.nickname} kanala katıldı.`);
+    showTemporaryMessage(`${userData.nickname} katıldı!`);
+
+    // Eğer voice için localStream yoksa, peer bağlantısını başlatmayalım
     if (!localStream) return;
+
     const peer = new SimplePeer({
       initiator: true,
       trickle: false,
@@ -44,10 +54,10 @@ function initSocket() {
     peer.on('signal', signalData => {
       socket.emit('signal', { to: userData.id, from: socket.id, signal: signalData, nickname });
     });
-    peer.on('stream', remoteStream => { addAudioStream(remoteStream, userData.id); });
+    peer.on('stream', remoteStream => {
+      addAudioStream(remoteStream, userData.id);
+    });
     peers[userData.id] = peer;
-    playNotificationSound();
-    showTemporaryMessage(`${userData.nickname} katıldı!`);
   });
 
   socket.on('signal', data => {
@@ -78,5 +88,7 @@ function initSocket() {
     const li = document.getElementById(`user-${user.id}`);
     if (li) li.remove();
     delete channelUsers[user.id];
+    playUserLeaveSound(); // Çıkış sesi veya farklı bildirim sesi
+    showBrowserNotification("Kullanıcı Ayrıldı", `${user.nickname} kanaldan ayrıldı.`);
   });
 }
