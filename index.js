@@ -53,6 +53,16 @@ app.post('/upload-sound', uploadSound.single('media'), (req, res) => {
   }
 });
 
+// Resim/Video Yükleme Rotası
+app.post('/upload', upload.single('media'), (req, res) => {
+  if (req.file) {
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ fileUrl });
+  } else {
+    res.status(400).json({ error: "Dosya yüklenemedi" });
+  }
+});
+
 // Socket.IO eventleri
 io.on('connection', socket => {
   console.log('Kullanıcı bağlandı: ' + socket.id);
