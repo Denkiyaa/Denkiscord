@@ -43,6 +43,16 @@ const soundStorage = multer.diskStorage({
 });
 const uploadSound = multer({ storage: soundStorage });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'public/uploads'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
 // Ses dosyası yükleme rotası
 app.post('/upload-sound', uploadSound.single('media'), (req, res) => {
   if (req.file) {
