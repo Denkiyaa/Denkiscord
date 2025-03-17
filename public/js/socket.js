@@ -31,8 +31,10 @@ function initSocket() {
 
   socket.on('chat message', data => {
     appendChatMessage(data);
-    playNotificationSound();
-    updateChatBadge(1); // Bildirim için badge güncellemesi örneği
+    if (data.id !== window.localSocketId) {
+      playNotificationSound();
+      updateChatBadge(1);
+    }
   });
 
   socket.on('channelUsers', data => { updateUserList(data.users); });
