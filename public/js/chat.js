@@ -1,6 +1,3 @@
-// Global değişkenler:
-let pendingFiles = []; // { file, preview } objeleri saklanacak
-
 function initChat() {
   // Gönder butonuna tıklama
   sendBtn.addEventListener('click', async () => {
