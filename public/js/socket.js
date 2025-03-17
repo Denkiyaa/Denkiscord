@@ -1,4 +1,16 @@
 // socket.js
+
+const socket = io();
+
+socket.on('connect', () => {
+  console.log("Socket connected, ID:", socket.id);
+});
+
+socket.on('disconnect', () => {
+  console.log("Socket disconnected");
+});
+
+
 function initSocket() {
   socket.on('connect', () => {
     localSocketId = socket.id;
