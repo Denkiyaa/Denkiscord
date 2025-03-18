@@ -90,6 +90,36 @@ window.playUserLeaveSound = function () {
   audio.play().catch(err => console.error("Kullanıcı çıkış sesi çalınamadı:", err));
 }
 
+let unreadCount = 0;
+function updateChatBadge(increment) {
+  unreadCount += increment;
+  const badge = document.getElementById('chatBadge');
+  if (unreadCount > 0) {
+    badge.style.display = 'block';
+    badge.textContent = unreadCount;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Örneğin, kullanıcı chat penceresine tıkladığında unreadCount sıfırlansın:
+document.getElementById('chatArea').addEventListener('click', () => {
+  unreadCount = 0;
+  updateChatBadge(0);
+});
+
+window.showBrowserNotification = function (title, body) {
+  if (Notification.permission === "granted") {
+    new Notification(title, { body: body });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification(title, { body: body });
+      }
+    });
+  }
+};
+
 function appendChatMessage(data) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('chat-message');
